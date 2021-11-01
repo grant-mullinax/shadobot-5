@@ -1,13 +1,9 @@
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
-import discord4j.core.`object`.command.ApplicationCommandOption
+import discord4j.core.event.domain.VoiceServerUpdateEvent
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
-import discord4j.discordjson.json.ApplicationCommandOptionData
-import discord4j.discordjson.json.ApplicationCommandRequest
 import music.MusicManager
-import org.reactivestreams.Publisher
 import java.io.File
-import java.util.function.Function
 
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -24,6 +20,7 @@ fun main() {
         CommandBinding(::executeBf),
         CommandBinding(musicManager::join),
         CommandBinding(musicManager::play),
+        CommandBinding(musicManager::skip),
     )
 
     for (command in commands) {
@@ -39,14 +36,11 @@ fun main() {
     val commandMap = commands.associateBy { it.applicationCommand.name() }
 
     client.on(ChatInputInteractionEvent::class.java) { event ->
-        try {
             val command = commandMap[event.commandName] ?: throw Exception("Command name was not mapped!")
             return@on command.execute(event)
-        } catch (e: Exception) {
-            println(e.stackTrace.toString())
-            throw e
         }
-    }.subscribe()
+        .doOnError { e -> error("Error occurred in command execution $e") }
+        .subscribe()
 
     client.onDisconnect().block()
 }
