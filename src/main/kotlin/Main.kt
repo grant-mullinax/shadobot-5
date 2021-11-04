@@ -1,36 +1,49 @@
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
-import discord4j.core.event.domain.VoiceServerUpdateEvent
+import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
-import music.MusicManager
+import music.MusicCommandManager
+import reactor.core.publisher.Mono
 import java.io.File
 
 
-@OptIn(ExperimentalStdlibApi::class)
 fun main() {
     val discordClient: DiscordClient = DiscordClient.create(File("key").readLines().first())
     val client: GatewayDiscordClient = discordClient.login().block() ?: throw Exception("Couldnt login!")
 
-    val applicationId = client.restClient.applicationId.block() ?: throw Exception("Couldnt get app id!")
-
-    val musicManager = MusicManager()
+    val musicCommandManager = MusicCommandManager()
 
     val commands = listOf(
-        CommandBinding(::testCommand),
         CommandBinding(::executeBf),
-        CommandBinding(musicManager::join),
-        CommandBinding(musicManager::play),
-        CommandBinding(musicManager::skip),
+        CommandBinding(musicCommandManager::join),
+        CommandBinding(musicCommandManager::play),
+        CommandBinding(musicCommandManager::skip),
+        CommandBinding(musicCommandManager::queue),
+        CommandBinding(musicCommandManager::playing),
+        CommandBinding(musicCommandManager::remove),
     )
 
-    for (command in commands) {
-        client.restClient.applicationService
-            .createGuildApplicationCommand(applicationId, 239604599701504010, command.applicationCommand)
-            .subscribe()
+    val applicationId = client.restClient.applicationId.block() ?: throw Exception("Couldnt get app id!")
+    val guildsIds = listOf(239604599701504010, 155061423016247296)
 
-        client.restClient.applicationService
-            .createGuildApplicationCommand(applicationId, 155061423016247296, command.applicationCommand)
-            .subscribe()
+    for (guildId in guildsIds) {
+        /*
+        val applicationCommands = client.restClient.applicationService.getGuildApplicationCommands(applicationId, guildId).collectList().block()!!
+        for (applicationCommand in applicationCommands) {
+            client.restClient.applicationService.deleteGuildApplicationCommand(
+                applicationId,
+                guildId,
+                applicationCommand.id().toLong()
+            )
+        }
+         */
+
+        for (command in commands) {
+            client.restClient.applicationService
+                .createGuildApplicationCommand(applicationId, guildId, command.applicationCommand)
+                .subscribe()
+            println("$guildId - registered ${command.applicationCommand.name()}")
+        }
     }
 
     val commandMap = commands.associateBy { it.applicationCommand.name() }
@@ -38,9 +51,15 @@ fun main() {
     client.on(ChatInputInteractionEvent::class.java) { event ->
             val command = commandMap[event.commandName] ?: throw Exception("Command name was not mapped!")
             return@on command.execute(event)
-        }
-        .doOnError { e -> error("Error occurred in command execution $e") }
+        }.doOnError { e -> error("Error occurred in command execution $e") }
         .subscribe()
+
+    client.on(VoiceStateUpdateEvent::class.java) { event ->
+        if (event.isLeaveEvent && event.current.userId == client.selfId) {
+            musicCommandManager.musicManager.stop()
+        }
+        return@on Mono.empty<Void>()
+    }.subscribe()
 
     client.onDisconnect().block()
 }

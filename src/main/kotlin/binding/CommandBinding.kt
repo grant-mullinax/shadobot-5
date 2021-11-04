@@ -17,12 +17,24 @@ annotation class ApplicationOption(val name: String, val description: String)
 interface ParameterData {
     val kParameter: KParameter
 }
+
 class ExplicitParameter(val name: String, override val kParameter: KParameter) : ParameterData
 class ImplicitParameter(override val kParameter: KParameter) : ParameterData
 
-class CommandBinding(private val function: KFunction<*>) {
+class CommandBinding(private val function: KFunction<Mono<Void>>) {
     val applicationCommand: ImmutableApplicationCommandRequest
     private val executionInfo: List<ParameterData>
+
+    companion object {
+        private val classToTypeMap = mutableMapOf<KClass<*>, KType>()
+
+        fun typeFromClass(cls: KClass<*>): KType {
+            if (!classToTypeMap.containsKey(cls)) {
+                classToTypeMap[cls] = cls.createType()
+            }
+            return classToTypeMap[cls]!!
+        }
+    }
 
     init {
         val functionAnnotation = this.function.annotations.filterIsInstance<ApplicationCommand>().firstOrNull()
@@ -68,7 +80,6 @@ class CommandBinding(private val function: KFunction<*>) {
         applicationCommand = applicationCommandBuilder.build()
     }
 
-    @ExperimentalStdlibApi
     fun execute(event: ChatInputInteractionEvent): Mono<Void> {
         val parameters: MutableMap<KParameter, Any> = mutableMapOf()
         for (parameter in executionInfo) {
@@ -82,7 +93,7 @@ class CommandBinding(private val function: KFunction<*>) {
                         val optionValue = optionalOptionValue.get().value.get()
                     parameters[parameter.kParameter] = when (parameter.kParameter.type) {
                         typeFromClass(String::class) -> optionValue.asString()
-                        typeFromClass(Int::class) -> optionValue.asLong()
+                        typeFromClass(Int::class) -> optionValue.asLong().toInt()
                         typeFromClass(Boolean::class) -> optionValue.asBoolean()
                         typeFromClass(Double::class) -> optionValue.asDouble()
                         typeFromClass(User::class) -> optionValue.asUser().block()!!
@@ -100,24 +111,6 @@ class CommandBinding(private val function: KFunction<*>) {
             }
         }
 
-        return when (function.returnType) {
-            typeFromClass(String::class) ->
-                event.reply(function.callBy(parameters) as String)
-            typeFromClass(InteractionApplicationCommandCallbackSpec::class) ->
-                event.reply(function.callBy(parameters) as InteractionApplicationCommandCallbackSpec)
-            typeOf<Mono<Void>>() -> function.callBy(parameters) as Mono<Void>
-            else -> throw Exception("Function return type was not mapped in execute!")
-        }
-    }
-
-    companion object {
-        private val classToTypeMap = mutableMapOf<KClass<*>, KType>()
-
-        fun typeFromClass(cls: KClass<*>): KType {
-            if (!classToTypeMap.containsKey(cls)) {
-                classToTypeMap[cls] = cls.createType()
-            }
-            return classToTypeMap[cls]!!
-        }
+        return function.callBy(parameters)
     }
 }

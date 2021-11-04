@@ -1,12 +1,16 @@
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
+import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono
+import reactor.core.publisher.Mono
 import java.util.*
 
 @ApplicationCommand("bf", "execute brainfuck program")
 fun executeBf(
+    event: ChatInputInteractionEvent,
     @ApplicationOption("program", "program to execute")
     program: String,
     @ApplicationOption("input", "input on program")
     input: String = ""
-): String {
+): Mono<Void> {
     val size = 10000
     val executionLimit = 1000000
 
@@ -66,13 +70,13 @@ fun executeBf(
         cmdIdx++
 
         if (ptr < 0 || ptr >= size) {
-            return "went out of range, this is what I had:\n$out"
+            event.reply("went out of range, this is what I had:\n$out")
         }
 
         if (executions > executionLimit) {
-            return "looped too hard... this is what I had:\n$out"
+            event.reply("looped too hard... this is what I had:\n$out")
         }
     }
 
-    return out
+    return event.reply(out)
 }
