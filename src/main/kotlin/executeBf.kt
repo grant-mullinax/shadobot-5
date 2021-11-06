@@ -1,3 +1,5 @@
+import binding.ApplicationCommand
+import binding.ApplicationOption
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono
 import reactor.core.publisher.Mono

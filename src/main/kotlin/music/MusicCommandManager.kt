@@ -1,7 +1,7 @@
 package music
 
-import ApplicationCommand
-import ApplicationOption
+import binding.ApplicationCommand
+import binding.ApplicationOption
 import discord4j.core.`object`.VoiceState
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Member
@@ -10,7 +10,6 @@ import discord4j.core.spec.VoiceChannelJoinSpec
 import discord4j.voice.VoiceConnection
 import music.guts.MusicManager
 import reactor.core.publisher.Mono
-import sun.audio.AudioPlayer.player
 import java.util.*
 
 
@@ -53,6 +52,7 @@ class MusicCommandManager {
             .then(musicManager.query(query))
             .doOnNext { track -> musicManager.queueTrack(track) }
             .flatMap { track -> event.editReply("Playing ${track.info.title} (${track.info.uri})") }
+            .switchIfEmpty(event.editReply("No results found!"))
             .then()
     }
 

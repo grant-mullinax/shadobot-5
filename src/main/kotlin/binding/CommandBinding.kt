@@ -1,38 +1,40 @@
+import binding.*
+import binding.optiondata.abstracts.AbstractParameterData
+import binding.optiondata.abstracts.ExplicitOptionData
+import binding.optiondata.types.*
+import discord4j.core.`object`.command.ApplicationCommandInteractionOptionValue
 import discord4j.core.`object`.command.ApplicationCommandOption
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.Channel
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
-import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono
-import discord4j.core.spec.InteractionApplicationCommandCallbackSpec
 import discord4j.discordjson.json.*
-import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 import kotlin.reflect.*
-import kotlin.reflect.full.createType
-
-annotation class ApplicationCommand(val name: String, val description: String)
-annotation class ApplicationOption(val name: String, val description: String)
-
-interface ParameterData {
-    val kParameter: KParameter
-}
-
-class ExplicitParameter(val name: String, override val kParameter: KParameter) : ParameterData
-class ImplicitParameter(override val kParameter: KParameter) : ParameterData
 
 class CommandBinding(private val function: KFunction<Mono<Void>>) {
     val applicationCommand: ImmutableApplicationCommandRequest
-    private val executionInfo: List<ParameterData>
+    private val parameterDataList: List<AbstractParameterData>
 
     companion object {
-        private val classToTypeMap = mutableMapOf<KClass<*>, KType>()
+        private fun mapParameterToParameterData(parameter: KParameter): AbstractParameterData {
+            return when(parameter.type.classifier) {
+                ChatInputInteractionEvent::class -> ChatInputInteractionEventParameterData(parameter)
 
-        fun typeFromClass(cls: KClass<*>): KType {
-            if (!classToTypeMap.containsKey(cls)) {
-                classToTypeMap[cls] = cls.createType()
+                String::class -> StringOptionData(parameter)
+                Int::class -> IntOptionData(parameter)
+                Boolean::class -> BooleanOptionData(parameter)
+                Double::class -> DoubleOptionData(parameter)
+                Mono::class -> {
+                    when (parameter.type.arguments.first().type!!.classifier) {
+                        User::class -> UserOptionData(parameter)
+                        Channel::class -> ChannelOptionData(parameter)
+                        Role::class -> RoleOptionData(parameter)
+                        else -> throw Exception("Type argument of mono was not mapped")
+                    }
+                }
+                else -> throw Exception("Type was not mapped for type ${parameter.type}")
             }
-            return classToTypeMap[cls]!!
         }
     }
 
@@ -44,73 +46,34 @@ class CommandBinding(private val function: KFunction<Mono<Void>>) {
                 .name(functionAnnotation.name)
                 .description(functionAnnotation.description)
 
-        val executionInfo = mutableListOf<ParameterData>()
+        val tempNameToParameterDataMap = mutableListOf<AbstractParameterData>()
+
         for (parameter in function.parameters) {
+            val parameterData = mapParameterToParameterData(parameter)
 
-            // todo fix ugly
-            if (parameter.type == typeFromClass(ChatInputInteractionEvent::class)) {
-                executionInfo.add(ImplicitParameter(parameter))
-                continue
+            tempNameToParameterDataMap.add(parameterData)
+
+            if (parameterData is ExplicitOptionData) {
+                val applicationCommandOption = ApplicationCommandOptionData.builder()
+                    .name(parameterData.optionAnnotation.name)
+                    .description(parameterData.optionAnnotation.description)
+                    .type(parameterData.commandOptionType)
+                    .required(!parameter.isOptional)
+                    .build()
+                applicationCommandBuilder = applicationCommandBuilder.addOption(applicationCommandOption)
             }
-
-            val optionAnnotation = parameter.annotations.filterIsInstance<ApplicationOption>().firstOrNull()
-                ?: throw Exception("Parameter was not annotated")
-            val applicationCommandOption = ApplicationCommandOptionData.builder()
-                .name(optionAnnotation.name)
-                .description(optionAnnotation.description)
-                .type(
-                    // todo look at typeOf<Int>()
-                    when(parameter.type) {
-                        typeFromClass(String::class) -> ApplicationCommandOption.Type.STRING.value
-                        typeFromClass(Int::class) -> ApplicationCommandOption.Type.INTEGER.value
-                        typeFromClass(Boolean::class) -> ApplicationCommandOption.Type.BOOLEAN.value
-                        typeFromClass(Double::class) -> ApplicationCommandOption.Type.NUMBER.value
-                        typeFromClass(User::class) -> ApplicationCommandOption.Type.USER.value
-                        typeFromClass(Channel::class) -> ApplicationCommandOption.Type.CHANNEL.value
-                        typeFromClass(Role::class) -> ApplicationCommandOption.Type.ROLE.value
-                        else -> throw Exception("Type was not mapped for type ${parameter.type}")
-                    })
-                .required(!parameter.isOptional)
-                .build()
-            applicationCommandBuilder = applicationCommandBuilder.addOption(applicationCommandOption)
-
-            executionInfo.add(ExplicitParameter(optionAnnotation.name, parameter))
         }
-        this.executionInfo = executionInfo.toList()
-        applicationCommand = applicationCommandBuilder.build()
+
+        this.applicationCommand = applicationCommandBuilder.build()
+        this.parameterDataList = tempNameToParameterDataMap
     }
 
     fun execute(event: ChatInputInteractionEvent): Mono<Void> {
-        val parameters: MutableMap<KParameter, Any> = mutableMapOf()
-        for (parameter in executionInfo) {
-            when (parameter) {
-                is ExplicitParameter -> {
-                    val optionalOptionValue = event.getOption(parameter.name)
-                    if (!optionalOptionValue.isPresent && parameter.kParameter.isOptional) {
-                        // its optional and the user didnt include it- pass
-                        continue
-                    }
-                        val optionValue = optionalOptionValue.get().value.get()
-                    parameters[parameter.kParameter] = when (parameter.kParameter.type) {
-                        typeFromClass(String::class) -> optionValue.asString()
-                        typeFromClass(Int::class) -> optionValue.asLong().toInt()
-                        typeFromClass(Boolean::class) -> optionValue.asBoolean()
-                        typeFromClass(Double::class) -> optionValue.asDouble()
-                        typeFromClass(User::class) -> optionValue.asUser().block()!!
-                        typeFromClass(Channel::class) -> optionValue.asChannel().block()!!
-                        typeFromClass(Role::class) -> optionValue.asRole().block()!!
-                        else -> throw Exception("Type was not mapped in execute!")
-                    }
-                }
-                is ImplicitParameter -> {
-                    parameters[parameter.kParameter] = when (parameter.kParameter.type) {
-                        typeFromClass(ChatInputInteractionEvent::class) -> event
-                        else -> throw Exception("Type was not mapped in execute!")
-                    }
-                }
-            }
-        }
-
-        return function.callBy(parameters)
+        return function.callBy(
+            this.parameterDataList
+                .map { parameterData -> parameterData.parameter to parameterData.extractValueFromEvent(event) }
+                .filter { it.second != null }
+                .toMap()
+        )
     }
 }
