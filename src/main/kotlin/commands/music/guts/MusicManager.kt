@@ -1,4 +1,4 @@
-package music.guts
+package commands.music.guts
 
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
@@ -11,8 +11,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameBufferFactory
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer
 import discord4j.voice.AudioProvider
-import music.LavaPlayerAudioProvider
-import music.MusicCommandManager
+import commands.music.LavaPlayerAudioProvider
 import reactor.core.publisher.Mono
 
 class MusicManager : AudioEventListener {
@@ -24,10 +23,10 @@ class MusicManager : AudioEventListener {
     var playing: AudioTrack? = null
 
     companion object {
-        val singleLink: Regex = Regex("^https://(www|m|music)\\.youtube\\.com/watch\\?v=[a-zA-Z0-9_-]{11}$")
+        val singleLink: Regex = Regex("^https://(www|m|commands.music)\\.youtube\\.com/watch\\?v=[a-zA-Z0-9_-]{11}$")
         val singleDirectLink: Regex = Regex("^https://youtu\\.be/[a-zA-Z0-9_-]{11}$")
         val playlistLink: Regex =
-            Regex("^https://(www|m|music)\\.youtube\\.com/(watch\\?v=[a-zA-Z0-9_-]{11}&list=|playlist\\?list=)(PL|LL|FL|UU)[a-zA-Z0-9_-]+.*$")
+            Regex("^https://(www|m|commands.music)\\.youtube\\.com/(watch\\?v=[a-zA-Z0-9_-]{11}&list=|playlist\\?list=)(PL|LL|FL|UU)[a-zA-Z0-9_-]+.*$")
     }
 
     init {

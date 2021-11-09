@@ -3,7 +3,6 @@ package binding
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.Channel
-import reactor.core.CoreSubscriber
 import reactor.core.publisher.Mono
 import kotlin.reflect.KParameter
 

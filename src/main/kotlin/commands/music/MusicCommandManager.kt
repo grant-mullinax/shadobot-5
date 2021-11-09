@@ -1,4 +1,4 @@
-package music
+package commands.music
 
 import binding.ApplicationCommand
 import binding.ApplicationOption
@@ -8,7 +8,7 @@ import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import discord4j.core.spec.VoiceChannelJoinSpec
 import discord4j.voice.VoiceConnection
-import music.guts.MusicManager
+import commands.music.guts.MusicManager
 import reactor.core.publisher.Mono
 import java.util.*
 
@@ -41,7 +41,7 @@ class MusicCommandManager {
                     .map { channelId -> Optional.of(channelId) }
                     .switchIfEmpty(Mono.just(Optional.empty()))
             )
-            .doOnNext { event.reply("Loading music...").subscribe() }
+            .doOnNext { event.reply("Loading commands.music...").subscribe() }
             .flatMap { tuple ->
                 if (tuple.t2.isPresent && tuple.t1.id == tuple.t2.get()) {
                     return@flatMap Mono.empty()

@@ -2,7 +2,7 @@ import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.VoiceStateUpdateEvent
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
-import music.MusicCommandManager
+import commands.music.MusicCommandManager
 import reactor.core.publisher.Mono
 import java.io.File
 

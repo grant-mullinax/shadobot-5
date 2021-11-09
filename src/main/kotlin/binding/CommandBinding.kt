@@ -2,8 +2,6 @@ import binding.*
 import binding.optiondata.abstracts.AbstractParameterData
 import binding.optiondata.abstracts.ExplicitOptionData
 import binding.optiondata.types.*
-import discord4j.core.`object`.command.ApplicationCommandInteractionOptionValue
-import discord4j.core.`object`.command.ApplicationCommandOption
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.Channel
