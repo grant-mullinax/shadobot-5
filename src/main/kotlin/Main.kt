@@ -28,7 +28,7 @@ fun main() {
     )
 
     val applicationId = client.restClient.applicationId.block() ?: throw Exception("Couldnt get app id!")
-    val guildsIds = listOf(239604599701504010, 155061423016247296)
+    val guildsIds = listOf(239604599701504010, 155061423016247296, 729217214271586394)
 
     for (guildId in guildsIds) {
         /*
