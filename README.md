@@ -17,6 +17,11 @@ Mono<User>
 Mono<Channel>
 Mono<Role>
 ```
+and it must return a Mono. Typically the mono would be returned from event.reply like the following:
+```kotlin
+event.reply("Removed ${track.info.title}")
+```
+(which returns a InteractionApplicationCommandCallbackReplyMono)
 2) annotate the function with the ApplicationCommand annotation, and supply the name and description of the slash command:
 
 ```kotlin
@@ -57,5 +62,5 @@ fun YOURCOOLCOMMAND(
 read this link: https://jstobigdata.com/java/getting-started-with-project-reactor/
 it might mislead you but probably not
 
-###extra bonus: 
+### extra bonus: 
 if you give up trying to figure out monos you can use .block() to retrieve the actual value from a mono. but this will block the thread until the value completes but who cares right
