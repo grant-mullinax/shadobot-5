@@ -1,5 +1,5 @@
  # !!!!!!!! SHADOBOT 5 !!!!!!!!
- ###to run:
+ ## to run:
  put your bot key as the only line in a file named "key" (no extension) in your root directory
  
 ### to add commands:
@@ -22,6 +22,7 @@ and it must return a Mono. Typically the mono would be returned from event.reply
 return event.reply("Removed ${track.info.title}")
 ```
 (which returns a InteractionApplicationCommandCallbackReplyMono)
+
 2) annotate the function with the ApplicationCommand annotation, and supply the name and description of the slash command:
 
 ```kotlin
@@ -29,7 +30,7 @@ return event.reply("Removed ${track.info.title}")
 fun YOURCOOLCOMMAND(...
 ```
 
-4) annotate your EXPLICIT parameters with ApplicationOption and supply their name and description
+3) annotate your EXPLICIT parameters with ApplicationOption and supply their name and description
 ```kotlin
 fun YOURCOOLCOMMAND(
     eventWeeWooAwesome: ChatInputInteractionEvent,
