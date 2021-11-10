@@ -56,3 +56,6 @@ fun YOURCOOLCOMMAND(
 ## bonus ducks: wtf is a mono? what is going on
 read this link: https://jstobigdata.com/java/getting-started-with-project-reactor/
 it might mislead you but probably not
+
+###extra bonus: 
+if you give up trying to figure out monos you can use .block() to retrieve the actual value from a mono. but this will block the thread until the value completes but who cares right
