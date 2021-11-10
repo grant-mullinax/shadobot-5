@@ -1,1 +1,0 @@
-ssh -t -i D:/ssh/azure minecrafter@23.96.52.80 < pullandrun.sh
