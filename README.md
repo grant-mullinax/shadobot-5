@@ -19,7 +19,7 @@ Mono<Role>
 ```
 and it must return a Mono. Typically the mono would be returned from event.reply like the following:
 ```kotlin
-event.reply("Removed ${track.info.title}")
+return event.reply("Removed ${track.info.title}")
 ```
 (which returns a InteractionApplicationCommandCallbackReplyMono)
 2) annotate the function with the ApplicationCommand annotation, and supply the name and description of the slash command:
