@@ -1,20 +1,20 @@
-package commands.music
+package com.shadobot.commands.music
 
-import binding.ApplicationCommand
-import binding.ApplicationOption
+import com.shadobot.binding.ApplicationCommand
+import com.shadobot.binding.ApplicationOption
+import com.shadobot.commands.music.guts.MusicManager
 import discord4j.core.`object`.VoiceState
 import discord4j.core.`object`.entity.Guild
 import discord4j.core.`object`.entity.Member
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import discord4j.core.spec.VoiceChannelJoinSpec
 import discord4j.voice.VoiceConnection
-import commands.music.guts.MusicManager
 import reactor.core.publisher.Mono
 import java.util.*
 
 
 class MusicCommandManager {
-    val musicManager: MusicManager = MusicManager()
+    private val musicManager: MusicManager = MusicManager()
 
     @ApplicationCommand("join", "joins vc")
     fun join(event: ChatInputInteractionEvent): Mono<Void> {
@@ -41,7 +41,7 @@ class MusicCommandManager {
                     .map { channelId -> Optional.of(channelId) }
                     .switchIfEmpty(Mono.just(Optional.empty()))
             )
-            .doOnNext { event.reply("Loading commands.music...").subscribe() }
+            .doOnNext { event.reply("Loading music...").subscribe() }
             .flatMap { tuple ->
                 if (tuple.t2.isPresent && tuple.t1.id == tuple.t2.get()) {
                     return@flatMap Mono.empty()
@@ -68,7 +68,7 @@ class MusicCommandManager {
         event: ChatInputInteractionEvent,
     ): Mono<Void> {
         return if (musicManager.queue.isNotEmpty()) {
-            event.reply("Playing ${musicManager.playing!!.info.title} (<${musicManager.playing!!.info.uri}>)\n\n"+
+            event.reply("Playing ${musicManager.playing!!.info.title} (<${musicManager.playing!!.info.uri}>)\n\n" +
                     musicManager.queue.withIndex()
                         .map { (i, track) -> "$i - ${track.info.title} (<${track.info.uri}>)" }
                         .reduce { acc, s -> "$acc\n$s" }

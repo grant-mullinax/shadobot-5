@@ -1,4 +1,4 @@
-package binding.optiondata.abstracts
+package com.shadobot.binding.optiondata.abstracts
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import kotlin.reflect.KParameter

@@ -1,4 +1,4 @@
-package commands.music
+package com.shadobot.commands.music
 
 import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer

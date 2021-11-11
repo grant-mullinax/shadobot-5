@@ -1,22 +1,26 @@
-import binding.*
-import binding.optiondata.abstracts.AbstractParameterData
-import binding.optiondata.abstracts.ExplicitOptionData
-import binding.optiondata.types.*
+package com.shadobot.binding
+
+import com.shadobot.binding.optiondata.abstracts.AbstractParameterData
+import com.shadobot.binding.optiondata.abstracts.ExplicitOptionData
+import com.shadobot.binding.optiondata.types.*
 import discord4j.core.`object`.entity.Role
 import discord4j.core.`object`.entity.User
 import discord4j.core.`object`.entity.channel.Channel
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
-import discord4j.discordjson.json.*
+import discord4j.discordjson.json.ApplicationCommandOptionData
+import discord4j.discordjson.json.ApplicationCommandRequest
+import discord4j.discordjson.json.ImmutableApplicationCommandRequest
 import reactor.core.publisher.Mono
-import kotlin.reflect.*
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 
-class CommandBinding(private val function: KFunction<Mono<Void>>) {
+abstract class AbstractCommandBinding(private val function: KFunction<Mono<Void>>) {
     val applicationCommand: ImmutableApplicationCommandRequest
     private val parameterDataList: List<AbstractParameterData>
 
     companion object {
         private fun mapParameterToParameterData(parameter: KParameter): AbstractParameterData {
-            return when(parameter.type.classifier) {
+            return when (parameter.type.classifier) {
                 ChatInputInteractionEvent::class -> ChatInputInteractionEventParameterData(parameter)
 
                 String::class -> StringOptionData(parameter)
@@ -47,6 +51,10 @@ class CommandBinding(private val function: KFunction<Mono<Void>>) {
         val tempNameToParameterDataMap = mutableListOf<AbstractParameterData>()
 
         for (parameter in function.parameters) {
+            // todo this is kinda yucky i should fix it
+            if (parameter.kind != KParameter.Kind.VALUE) {
+                continue
+            }
             val parameterData = mapParameterToParameterData(parameter)
 
             tempNameToParameterDataMap.add(parameterData)
@@ -66,12 +74,10 @@ class CommandBinding(private val function: KFunction<Mono<Void>>) {
         this.parameterDataList = tempNameToParameterDataMap
     }
 
-    fun execute(event: ChatInputInteractionEvent): Mono<Void> {
-        return function.callBy(
-            this.parameterDataList
-                .map { parameterData -> parameterData.parameter to parameterData.extractValueFromEvent(event) }
-                .filter { it.second != null }
-                .toMap()
-        )
+    fun getParameterMapFromEvent(event: ChatInputInteractionEvent): Map<KParameter, Any?> {
+        return this.parameterDataList
+            .map { parameterData -> parameterData.parameter to parameterData.extractValueFromEvent(event) }
+            .filter { it.second != null }
+            .toMap()
     }
 }

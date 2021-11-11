@@ -1,6 +1,6 @@
-package binding.optiondata.types
+package com.shadobot.binding.optiondata.types
 
-import binding.optiondata.abstracts.ExplicitOptionData
+import com.shadobot.binding.optiondata.abstracts.ExplicitOptionData
 import discord4j.core.`object`.command.ApplicationCommandOption
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent
 import kotlin.reflect.KParameter

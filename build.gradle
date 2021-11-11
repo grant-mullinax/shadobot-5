@@ -3,7 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.31'
 }
 
-group 'com.shstrkr'
+group 'com.shadobot'
 version '0.1'
 
 repositories {
@@ -23,6 +23,6 @@ dependencies {
 }
 
 application {
-    mainClass = 'com.shstrkr.MainKt'
+    mainClass = 'com.shadobot.MainKt'
 }
 

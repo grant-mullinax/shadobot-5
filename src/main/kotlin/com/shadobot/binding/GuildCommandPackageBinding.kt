@@ -1,4 +1,4 @@
-package binding
+package com.shadobot.binding
 
 /* class GuildCommandPackageBinding(klass: KClass<*>) {
     init {

@@ -1,4 +1,4 @@
-package commands.music.guts
+package com.shadobot.commands.music.guts
 
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
@@ -10,8 +10,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameBufferFactory
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer
+import com.shadobot.commands.music.LavaPlayerAudioProvider
 import discord4j.voice.AudioProvider
-import commands.music.LavaPlayerAudioProvider
 import reactor.core.publisher.Mono
 
 class MusicManager : AudioEventListener {
@@ -48,11 +48,12 @@ class MusicManager : AudioEventListener {
     fun query(
         query: String,
     ): Mono<AudioTrack> {
-        val qualifiedQuery = if (singleLink.matches(query) || singleDirectLink.matches(query) || playlistLink.matches(query)) {
-            query
-        } else {
-            "ytsearch:$query"
-        }
+        val qualifiedQuery =
+            if (singleLink.matches(query) || singleDirectLink.matches(query) || playlistLink.matches(query)) {
+                query
+            } else {
+                "ytsearch:$query"
+            }
 
         return Mono.create { emitter ->
             playerManager.loadItem(
@@ -105,8 +106,10 @@ class MusicManager : AudioEventListener {
 
     override fun onEvent(event: AudioEvent?) {
         when (event) {
-            is PlayerPauseEvent -> {}
-            is PlayerResumeEvent -> {}
+            is PlayerPauseEvent -> {
+            }
+            is PlayerResumeEvent -> {
+            }
             is TrackEndEvent -> {
                 this.playNextInQueue()
             }
@@ -114,7 +117,8 @@ class MusicManager : AudioEventListener {
                 print("Track exception happened")
                 this.playNextInQueue()
             }
-            is TrackStartEvent -> {}
+            is TrackStartEvent -> {
+            }
             is TrackStuckEvent -> {
                 print("Track got stuck for some reason?")
                 this.playNextInQueue()
