@@ -96,6 +96,8 @@ class MusicManager : AudioEventListener {
         if (queue.isNotEmpty()) {
             val track = queue.removeFirst()
             this.play(track)
+        } else {
+            this.stop()
         }
     }
 
