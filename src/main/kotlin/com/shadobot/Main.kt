@@ -23,7 +23,8 @@ fun main() {
 
     client.on(ChatInputInteractionEvent::class.java) { event ->
         return@on chatInputHandler.handle(event)
-    }.doOnError { e -> error("Error occurred in command execution $e") }
+    }
+        .doOnError { e -> error("Error occurred in command execution $e") }
         .subscribe()
 
     client.on(VoiceStateUpdateEvent::class.java) { event ->

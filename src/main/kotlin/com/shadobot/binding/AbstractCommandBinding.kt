@@ -51,7 +51,7 @@ abstract class AbstractCommandBinding(private val function: KFunction<Mono<Void>
         val tempNameToParameterDataMap = mutableListOf<AbstractParameterData>()
 
         for (parameter in function.parameters) {
-            // todo this is kinda yucky i should fix it
+            // exclude the hidden instance parameter
             if (parameter.kind != KParameter.Kind.VALUE) {
                 continue
             }
