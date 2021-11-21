@@ -10,6 +10,8 @@ import reactor.core.publisher.Mono
 import kotlin.reflect.KClassifier
 import kotlin.reflect.full.primaryConstructor
 
+
+
 // todo explicitly making modules inherit, deliver instance-classed kfunctions, and declare their commands might be a good idea
 class ChatInputHandler(private val commandMap: Map<String, AbstractCommandBinding>) {
     private val commandPackageInstanceMap = mutableMapOf<Pair<KClassifier, Snowflake>, Any>()
@@ -38,26 +40,22 @@ class ChatInputHandler(private val commandMap: Map<String, AbstractCommandBindin
         }
     }
 
-    private val guildsIds = listOf(239604599701504010, 155061423016247296, 729217214271586394)
+    private val devGuildIds = listOf(239604599701504010)
 
     fun createApplicationCommands(client: GatewayDiscordClient) {
-        val applicationId = client.restClient.applicationId.block() ?: throw Exception("Couldnt get app id!")
+        val applicationId = client.restClient.applicationId.block() ?: throw Exception("Couldn't get app id!")
 
-        for (guildId in guildsIds) {
-            /*
-            val applicationCommands = client.restClient.applicationService.getGuildApplicationCommands(applicationId, guildId).collectList().block()!!
-            for (applicationCommand in applicationCommands) {
-                client.restClient.applicationService.deleteGuildApplicationCommand(
-                    applicationId,
-                    guildId,
-                    applicationCommand.id().toLong()
-                )
-            }
-             */
+        for (command in commandMap.values) {
+            client.restClient.applicationService
+                .createGlobalApplicationCommand(applicationId, command.applicationCommand)
+                .subscribe()
+            println("Registered global ${command.applicationCommand.name()}")
+        }
 
+        for (guildId in devGuildIds) {
             for (command in commandMap.values) {
                 client.restClient.applicationService
-                    .createGuildApplicationCommand(applicationId, guildId, command.applicationCommand)
+                    .createGlobalApplicationCommand(applicationId, command.applicationCommand)
                     .subscribe()
                 println("$guildId - registered ${command.applicationCommand.name()}")
             }

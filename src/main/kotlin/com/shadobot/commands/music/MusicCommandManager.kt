@@ -56,6 +56,19 @@ class MusicCommandManager {
             .then()
     }
 
+    @ApplicationCommand("leave", "leave voice channel")
+    fun leave(
+        event: ChatInputInteractionEvent,
+    ): Mono<Void> {
+        return Mono.fromCallable { musicManager.stop() }
+            .then(
+                event.interaction.guild
+                    .flatMap(Guild::getVoiceConnection)
+                    .flatMap { it.disconnect() }
+            ).then(event.reply("Left voice channel"))
+
+    }
+
     @ApplicationCommand("skip", "skip song")
     fun skip(
         event: ChatInputInteractionEvent,

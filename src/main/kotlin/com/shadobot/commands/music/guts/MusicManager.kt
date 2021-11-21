@@ -12,9 +12,13 @@ import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrameBufferFactory
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer
 import com.shadobot.commands.music.LavaPlayerAudioProvider
 import discord4j.voice.AudioProvider
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 
 class MusicManager : AudioEventListener {
+    private val logger: Logger = LoggerFactory.getLogger(MusicManager::class.java)
+
     val provider: AudioProvider
     private val player: AudioPlayer
     private val playerManager: DefaultAudioPlayerManager = DefaultAudioPlayerManager()
@@ -109,6 +113,7 @@ class MusicManager : AudioEventListener {
     override fun onEvent(event: AudioEvent?) {
         when (event) {
             is PlayerPauseEvent -> {
+                logger.error("Pause?")
             }
             is PlayerResumeEvent -> {
             }
@@ -116,17 +121,17 @@ class MusicManager : AudioEventListener {
                 this.playNextInQueue()
             }
             is TrackExceptionEvent -> {
-                print("Track exception happened")
+                logger.error("Track exception happened")
                 this.playNextInQueue()
             }
             is TrackStartEvent -> {
             }
             is TrackStuckEvent -> {
-                print("Track got stuck for some reason?")
+                logger.error("Track got stuck for some reason?")
                 this.playNextInQueue()
             }
             null -> {
-                print("AudioEvent was null?")
+                logger.error("AudioEvent was null?")
             }
         }
     }
