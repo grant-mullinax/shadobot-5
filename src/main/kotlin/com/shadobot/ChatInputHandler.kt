@@ -45,6 +45,24 @@ class ChatInputHandler(private val commandMap: Map<String, AbstractCommandBindin
     fun createApplicationCommands(client: GatewayDiscordClient) {
         val applicationId = client.restClient.applicationId.block() ?: throw Exception("Couldn't get app id!")
 
+        client.restClient.guilds.flatMap {
+            client.guilds.flatMap { guild ->
+                client.restClient.applicationService.getGuildApplicationCommands(
+                    applicationId,
+                    guild.id.asLong()
+                ).flatMap { applicationCommmand ->
+                    client.restClient.applicationService.deleteGuildApplicationCommand(
+                        applicationId,
+                        guild.id.asLong(),
+                        applicationCommmand.id().toLong()
+                    )
+                }
+            }
+        }
+
+        client.restClient.applicationService.getGlobalApplicationCommands(applicationId)
+            .flatMap { client.restClient.applicationService.deleteGlobalApplicationCommand(applicationId, it.id().toLong())}
+
         for (command in commandMap.values) {
             client.restClient.applicationService
                 .createGlobalApplicationCommand(applicationId, command.applicationCommand)
