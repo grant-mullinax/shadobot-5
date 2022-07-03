@@ -51,6 +51,7 @@ class ChatInputHandler(private val commandMap: Map<String, AbstractCommandBindin
                     applicationId,
                     guild.id.asLong()
                 ).flatMap { applicationCommmand ->
+                    print("deleted ${applicationCommmand.name()}")
                     client.restClient.applicationService.deleteGuildApplicationCommand(
                         applicationId,
                         guild.id.asLong(),
@@ -61,7 +62,10 @@ class ChatInputHandler(private val commandMap: Map<String, AbstractCommandBindin
         }
 
         client.restClient.applicationService.getGlobalApplicationCommands(applicationId)
-            .flatMap { client.restClient.applicationService.deleteGlobalApplicationCommand(applicationId, it.id().toLong())}
+            .flatMap {
+                print("deleted ${it.name()}")
+                client.restClient.applicationService.deleteGlobalApplicationCommand(applicationId, it.id().toLong())
+            }
 
         for (command in commandMap.values) {
             client.restClient.applicationService
